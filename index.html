@@ -16,28 +16,42 @@
     <div id="productos"></div>
 
     <script>
-        async function cargarProductos() {
-    const url = "https://script.google.com/macros/s/AKfycbyPYlSTTnTaYmndDj2J3aALeLyGm6ieHrBkr7y1WaiY1iOw7Ej4pwnuPSo3qI41y08BOQ/exec"; 
-    try {
-        let respuesta = await fetch(url);
-        let productos = await respuesta.json();
-        console.log(productos);  // Verifica los datos cargados
-        let html = "";
-        productos.forEach(prod => {
-            // Verifica si hay imagen, si no, muestra una imagen predeterminada
-            let imagen = prod.imagen ? prod.imagen : "https://via.placeholder.com/200"; // Imagen por defecto si está vacía
-            html += `<div class="producto">
-                <img src="${imagen}" alt="${prod.nombre}">
-                <h2>${prod.nombre}</h2>
-                <p>${prod.descripcion}</p>
-                <strong>${prod.precio}</strong>
-            </div>`;
-        });
-        document.getElementById("productos").innerHTML = html;
-    } catch (error) {
-        console.error("Error cargando productos:", error);
-    }
-}
+        window.onload = async function() {
+            // URL de la API con el proxy CORS
+            const url = "https://cors-anywhere.herokuapp.com/https://script.google.com/macros/s/AKfycbxNtEyG4yfLu6IYUQsha7GPAk0bqUFz1D1_tD1IZhTJOoagTL4sTzhhUylIabGf3Hwh-w/exec"; 
+            
+            try {
+                let respuesta = await fetch(url);
+
+                if (!respuesta.ok) {
+                    throw new Error(`Error en la respuesta del servidor: ${respuesta.statusText}`);
+                }
+
+                let productos = await respuesta.json();
+                console.log(productos);  // Verifica los datos
+
+                if (productos.length === 0) {
+                    document.getElementById("productos").innerHTML = "No hay productos disponibles.";
+                    return;
+                }
+
+                let html = "";
+                productos.forEach(prod => {
+                    let imagen = prod.imagen ? prod.imagen : "https://via.placeholder.com/200"; 
+                    html += `<div class="producto">
+                        <img src="${imagen}" alt="${prod.nombre}">
+                        <h2>${prod.nombre}</h2>
+                        <p>${prod.descripcion}</p>
+                        <strong>${prod.precio}</strong>
+                    </div>`;
+                });
+
+                document.getElementById("productos").innerHTML = html;
+            } catch (error) {
+                console.error("Error cargando productos:", error);
+                document.getElementById("productos").innerHTML = `Error al cargar los productos: ${error.message}`;
+            }
+        }
     </script>
 
 </body>
