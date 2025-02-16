@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .producto { border: 1px solid #ddd; padding: 10px; margin: 10px; display: inline-block; width: 200px; }
+        img { width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>Lista de Productos</h1>
+    <div id="productos"></div>
+
+    <script>
+        async function cargarProductos() {
+            const url = "https://script.google.com/macros/s/AKfycbyPYlSTTnTaYmndDj2J3aALeLyGm6ieHrBkr7y1WaiY1iOw7Ej4pwnuPSo3qI41y08BOQ/exec"; // Reemplaza con tu URL si es diferente
+            try {
+                let respuesta = await fetch(url);
+                let productos = await respuesta.json();
+                
+                let html = "";
+                productos.forEach(prod => {
+                    html += `<div class="producto">
+                        <img src="${prod.imagen}" alt="${prod.nombre}">
+                        <h2>${prod.nombre}</h2>
+                        <p>${prod.descripcion}</p>
+                        <strong>$${prod.precio}</strong>
+                    </div>`;
+                });
+                
+                document.getElementById("productos").innerHTML = html;
+            } catch (error) {
+                console.error("Error cargando productos:", error);
+            }
+        }
+
+        cargarProductos();
+    </script>
+
+</body>
+</html>
