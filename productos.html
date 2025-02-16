@@ -3,32 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Productos</title>
+    <title>Productos</title>
+    <style>
+        /* Estilo básico para los productos */
+        .producto {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            width: calc(33% - 20px);
+            box-sizing: border-box;
+            float: left;
+            text-align: center;
+        }
+
+        .producto img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Estilo para la paginación */
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            margin: 0 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .pagination button.disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
-    <h2>Lista de Productos</h2>
-    <div id="productos"></div>
+    <h1>Productos</h1>
+    <div id="productos-container"></div>
+    
+    <div class="pagination">
+        <button id="prev-btn" class="disabled" onclick="cargarPagina('prev')">Anterior</button>
+        <button id="next-btn" onclick="cargarPagina('next')">Siguiente</button>
+    </div>
 
     <script>
-        fetch('https://raw.githubusercontent.com/donappclick/donappclick/main/productos.json')
-            .then(response => response.json())
-            .then(data => {
-                let html = '';
-                data.forEach(producto => {
-                    html += `
-                        <div>
-                            <h3>${producto.nombre}</h3>
-                            <p>${producto.descripcion}</p>
-                            <p>Precio: $${producto.precio}</p>
-                            <p>Stock: ${producto.stock}</p>
-                            <img src="${producto.imagen}" alt="${producto.nombre}" width="200">
-                        </div>
-                        <hr>
-                    `;
+        // Número de productos por página
+        const productosPorPagina = 10;
+        let paginaActual = 1;
+        let productos = [];
+
+        // Cargar productos desde el archivo JSON
+        function cargarProductos() {
+            fetch('https://raw.githubusercontent.com/donappclick/donappclick/main/productos/productos.json')
+                .then(response => response.json())
+                .then(data => {
+                    productos = data.productos;
+                    mostrarProductos();
+                })
+                .catch(error => {
+                    console.error('Error al cargar los productos:', error);
                 });
-                document.getElementById('productos').innerHTML = html;
-            })
-            .catch(error => console.error('Error cargando productos:', error));
+        }
+
+        // Mostrar los productos en la página
+        function mostrarProductos() {
+            const startIndex = (paginaActual - 1) * productosPorPagina;
+            const endIndex = startIndex + productosPorPagina;
+            const productosAMostrar = productos.slice(startIndex, endIndex);
+
+            const container = document.getElementById('productos-container');
+            container.innerHTML = ''; // Limpiar contenido
+
+            productosAMostrar.forEach(producto => {
+                const productoDiv = document.createElement('div');
+                productoDiv.classList.add('producto');
+                productoDiv.innerHTML = `
+                    <img src="${producto.imagen}" alt="${producto.nombre}">
+                    <h3>${producto.nombre}</h3>
+                    <p>${producto.descripcion}</p>
+                    <p>Precio: $${producto.precio}</p>
+                    <p>Stock: ${producto.stock}</p>
+                `;
+                container.appendChild(productoDiv);
+            });
+
+            // Controlar la visibilidad de los botones de paginación
+            document.getElementById('prev-btn').classList.toggle('disabled', paginaActual === 1);
+            document.getElementById('next-btn').classList.toggle('disabled', paginaActual * productosPorPagina >= productos.length);
+        }
+
+        // Función para cambiar de página
+        function cargarPagina(direccion) {
+            if (direccion === 'next' && paginaActual * productosPorPagina < productos.length) {
+                paginaActual++;
+            } else if (direccion === 'prev' && paginaActual > 1) {
+                paginaActual--;
+            }
+            mostrarProductos();
+        }
+
+        // Cargar los productos cuando la página se cargue
+        window.onload = cargarProductos;
     </script>
 </body>
 </html>
