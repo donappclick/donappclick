@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1, h2, p {
+            margin: 0;
+        }
+
+        /* Contenedor principal */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Título */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #2c3e50;
+            color: white;
+        }
+
+        header h1 {
+            font-size: clamp(2rem, 5vw, 4rem);
+        }
+
+        /* Campo de búsqueda */
+        .buscador {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .buscador input {
+            padding: 10px;
+            font-size: 1rem;
+            width: 80%;
+            max-width: 400px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Grid de productos */
+        .productos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .producto {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .producto:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .producto img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .producto h2 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            margin: 10px 0;
+        }
+
+        .producto p {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: #555;
+        }
+
+        .producto .precio {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            font-weight: bold;
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-contenido {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .modal h2 {
+            font-size: 2rem;
+        }
+
+        .modal .precio {
+            font-size: 1.5rem;
+            color: #e74c3c;
+        }
+
+        .modal-cerrar {
+            background: none;
+            border: none;
+            font-size: 30px;
+            color: #333;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+
+        /* Carrito */
+        .carrito {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .carrito:hover {
+            background-color: #2980b9;
+        }
+
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            border: none;
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .pagination button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Carrito en modal */
+        .carrito-modal {
+            margin-top: 20px;
+        }
+        .carrito-modal table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .carrito-modal th, .carrito-modal td {
+            padding: 10px;
+            text-align: left;
+        }
+        .carrito-modal th {
+            background-color: #3498db;
+            color: white;
+        }
+        .carrito-modal td {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Supermercado Online</h1>
+        <p>Los mejores productos al mejor precio</p>
+    </header>
+
+    <div class="container">
+        <!-- Buscador -->
+        <div class="buscador">
+            <input type="text" id="searchInput" placeholder="Buscar productos..." onkeyup="filtrarProductos()">
+        </div>
+
+        <!-- Productos -->
+        <div id="productos" class="productos">
+            <!-- Productos cargados dinámicamente -->
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Carrito de compras -->
+    <button id="mostrarCarrito" class="carrito" onclick="mostrarCarrito()">Ver Carrito</button>
+
+    <!-- Modal para producto -->
+    <div id="modal" class="modal">
+        <div class="modal-contenido">
+            <button class="modal-cerrar" onclick="cerrarModal()">X</button>
+            <img id="modalImagen" src="" alt="">
+            <h2 id="modalTitulo"></h2>
+            <p id="modalDescripcion"></p>
+            <div id="modalPrecio" class="precio"></div>
+            <button id="agregarCarrito" onclick="agregarAlCarrito()">Agregar al carrito</button>
+        </div>
+    </div>
+
+    <!-- Modal de carrito -->
+    <div id="modalCarrito" class="modal">
+        <div class="modal-contenido">
+            <button class="modal-cerrar" onclick="cerrarModalCarrito()">X</button>
+            <h2>Carrito de compras</h2>
+            <div id="carritoLista" class="carrito-modal">
+                <table id="tablaCarrito">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <button onclick="generarPDF()">Imprimir Carrito</button>
+        </div>
+    </div>
+
+    <script>
+        let productos = [];
+        let productosFiltrados = [];
+        let productosPorPagina = 10;
+        let paginaActual = 1;
+        let carrito = [];
+
+        // Cargar productos al inicio
+        window.onload = async function() {
+            const url = "https://api.allorigins.win/raw?url=https://script.google.com/macros/s/AKfycbzlyIHe_OHMxQg48et57ZJU32ZzCw_y_hpRW3vC3CNQ6W51x0Vu9LXPXV4zvT8COPiFgA/exec";
+            
+            try {
+                let respuesta = await fetch(url);
+                if (!respuesta.ok) throw new Error("Error al cargar los productos");
+                productos = await respuesta.json();
+                productosFiltrados = productos; 
+                mostrarProductos();
+                crearPaginacion();
+            } catch (error) {
+                console.error("Error cargando productos:", error);
+            }
+        }
+
+        // Mostrar productos
+        function mostrarProductos() {
+            let inicio = (paginaActual - 1) * productosPorPagina;
+            let fin = paginaActual * productosPorPagina;
+            let productosPaginados = productosFiltrados.slice(inicio, fin);
+
+            let html = "";
+            productosPaginados.forEach((prod, index) => {
+                let imagen = prod.imagen || "https://via.placeholder.com/250";
+                html += `
+                    <div class="producto" onclick="abrirModal(${index})">
+                        <img src="${imagen}" alt="${prod.nombre}">
+                        <h2>${prod.nombre}</h2>
+                        <p>${prod.descripcion}</p>
+                        <div class="precio">${prod.precio}</div>
+                    </div>
+                `;
+            });
+
+            document.getElementById("productos").innerHTML = html;
+        }
+
+        // Paginación
+        function crearPaginacion() {
+            let totalPaginas = Math.ceil(productosFiltrados.length / productosPorPagina);
+            let html = "";
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                html += `<button onclick="cambiarPagina(${i})">${i}</button>`;
+            }
+
+            document.getElementById("pagination").innerHTML = html;
+        }
+
+        function cambiarPagina(pagina) {
+            paginaActual = pagina;
+            mostrarProductos();
+        }
+
+        // Filtrar productos
+        function filtrarProductos() {
+            let query = document.getElementById('searchInput').value.toLowerCase();
+            productosFiltrados = productos.filter(prod => 
+                prod.nombre.toLowerCase().includes(query) || 
+                prod.descripcion.toLowerCase().includes(query)
+            );
+            paginaActual = 1;
+            mostrarProductos();
+            crearPaginacion();
+        }
+
+        // Abrir modal
+        function abrirModal(index) {
+            let producto = productos[index];
+            document.getElementById("modalImagen").src = producto.imagen;
+            document.getElementById("modalTitulo").innerText = producto.nombre;
+            document.getElementById("modalDescripcion").innerText = producto.descripcion;
+            document.getElementById("modalPrecio").innerText = producto.precio;
+            document.getElementById("modal").style.display = "flex";
+        }
+
+        // Cerrar modal
+        function cerrarModal() {
+            document.getElementById("modal").style.display = "none";
+        }
+
+        // Agregar al carrito
+        function agregarAlCarrito() {
+            let nombre = document.getElementById("modalTitulo").innerText;
+            let producto = productos.find(prod => prod.nombre === nombre);
+            carrito.push(producto);
+            alert(`${producto.nombre} ha sido agregado al carrito`);
+        }
+
+        // Mostrar carrito
+        function mostrarCarrito() {
+            let modalCarrito = document.getElementById("modalCarrito");
+            let tablaCarrito = document.getElementById("tablaCarrito").getElementsByTagName('tbody')[0];
+            tablaCarrito.innerHTML = "";
+
+            carrito.forEach(producto => {
+                let row = tablaCarrito.insertRow();
+                row.innerHTML = `
+                    <td>${producto.nombre}</td>
+                    <td>${producto.precio}</td>
+                `;
+            });
+
+            modalCarrito.style.display = "flex";
+        }
+
+        // Cerrar modal carrito
+        function cerrarModalCarrito() {
+            document.getElementById("modalCarrito").style.display = "none";
+        }
+
+        // Generar PDF del carrito
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            let y = 10;
+            carrito.forEach(producto => {
+                doc.text(`Producto: ${producto.nombre} - Precio: ${producto.precio}`, 10, y);
+                y += 10;
+            });
+
+            doc.save('carrito.pdf');
+        }
+    </script>
+</body>
+</html>
